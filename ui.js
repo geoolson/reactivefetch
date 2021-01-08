@@ -1,9 +1,11 @@
 "use strict";
 const React = require("react");
+const { useEffect, useState } = React;
 const os = require("os");
-const { execSync } = require("child_process");
 const { Text, Box } = require("ink");
 const platform = os.platform();
+const util = require("util");
+const exec = util.promisify(require("child_process").exec);
 
 // os platform constants
 const WINDOWS = "win32";
@@ -53,12 +55,13 @@ const CPUInfo = () => {
 };
 
 const GPU = () => {
-  const gpu =
-    platform === WINDOWS
-      ? execSync("wmic path win32_VideoController get name")
-          .toString()
-          .split(os.EOL)[1]
-      : null;
+  const [gpu, setGpu] = useState("");
+  useEffect(() => {
+    if (platform === WINDOWS)
+      exec("wmic path win32_VideoController get name").then(({ stdout }) => {
+        setGpu(stdout.split(os.EOL)[1]);
+      });
+  }, []);
   // : platform === LINUX ?
   // execsync("lspci -mm").toString().split(os.EOL);
   return <Info title="GPU">{gpu}</Info>;
@@ -116,16 +119,17 @@ const Colors = () => {
 };
 
 const Resolution = () => {
-  const [x, y] =
-    platform === WINDOWS
-      ? execSync(
-          "wmic path Win32_VideoController get CurrentHorizontalResolution && " +
-            "wmic path Win32_VideoController get CurrentVerticalResolution"
-        )
-          .toString()
-          .match(/\d+/g)
-      : null;
-  return <Info title="Resolution">{`${x}x${y}`}</Info>;
+  const [[x, y], setRes] = useState([null, null]);
+  useEffect(() => {
+    if (platform === WINDOWS)
+      Promise.all([
+        exec("wmic path Win32_VideoController get CurrentHorizontalResolution"),
+        exec("wmic path Win32_VideoController get CurrentVerticalResolution"),
+      ]).then((values) => {
+        setRes(values.map(({ stdout }) => stdout.match(/\d+/)));
+      });
+  }, []);
+  return <Info title="Resolution">{x && y ? `${x}x${y}` : null}</Info>;
 };
 
 const megaBytes = (bytes) => Math.floor(bytes / (1024 * 1024));
