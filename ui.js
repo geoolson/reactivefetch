@@ -115,6 +115,19 @@ const Colors = () => {
   );
 };
 
+const Resolution = () => {
+  const [x, y] =
+    platform === WINDOWS
+      ? execSync(
+          "wmic path Win32_VideoController get CurrentHorizontalResolution && " +
+            "wmic path Win32_VideoController get CurrentVerticalResolution"
+        )
+          .toString()
+          .match(/\d+/g)
+      : null;
+  return <Info title="Resolution">{`${x}x${y}`}</Info>;
+};
+
 const megaBytes = (bytes) => Math.floor(bytes / (1024 * 1024));
 
 const App = () => (
@@ -131,6 +144,7 @@ const App = () => (
       <Info title="Memory">
         {`${megaBytes(os.freemem())}MiB / ${megaBytes(os.totalmem())}MiB`}
       </Info>
+      <Resolution />
       <Colors />
     </Box>
   </Box>
