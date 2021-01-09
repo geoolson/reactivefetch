@@ -53,9 +53,7 @@ const Info = ({ title, windows, linux, children }) => {
       text().then((data) => {
         if (mounted) setOutput(typeof data !== "object" ? data : "");
       });
-    return () => {
-      mounted = false;
-    };
+    return () => (mounted = false);
   }, []);
   return (
     <Text>
