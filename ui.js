@@ -75,13 +75,13 @@ const GPU = () => {
   // execsync("lspci -mm").toString().split(os.EOL);
   return (
     <Info
+      title="GPU"
       windows={async () => {
         const { stdout } = await exec(
           "wmic path win32_VideoController get name"
         );
         return stdout.split(os.EOL)[1];
       }}
-      title="GPU"
     />
   );
 };
@@ -140,6 +140,7 @@ const Colors = () => {
 const Resolution = () => {
   return (
     <Info
+      title="Resolution"
       windows={async () => {
         const values = await Promise.all([
           exec(
@@ -150,7 +151,6 @@ const Resolution = () => {
         const [x, y] = values.map(({ stdout }) => stdout.match(/\d+/));
         return `${x}x${y}`;
       }}
-      title="Resolution"
     />
   );
 };
