@@ -38,33 +38,50 @@ const WinImage = () => {
 
 const color = platform === WINDOWS ? "cyan" : "green";
 
-const Info = ({ title, children }) => {
+const Info = ({ title, windows, linux, children }) => {
+  // pattern mathcing platform. children will be the default case
+  const text =
+    {
+      [WINDOWS]: windows,
+      [LINUX]: linux,
+    }[platform] || children;
+  const [output, setOutput] = useState(typeof text == "string" ? text : "");
+  useEffect(() => {
+    if (text?.constructor?.name === "Function") setOutput(text());
+    else if (text?.constructor?.name === "AsyncFunction")
+      text().then((data) => {
+        setOutput(typeof data !== "object" ? data : "");
+      });
+  }, []);
   return (
     <Text>
-      <Text color={color}>{title}</Text>: {children}
+      <Text color={color}>{title}</Text>: {output}
     </Text>
   );
 };
 
 const CPUInfo = () => {
-  const cpu = os.cpus();
+  const [cpu] = useState(os.cpus());
   const [{ model, speed }] = cpu;
   return (
-    <Info title="CPU">{`${model.trim()} (${cpu.length}) @ ${speed}MHz`}</Info>
+    <Info title="CPU">{`${model?.trim()} (${cpu?.length}) @ ${speed}MHz`}</Info>
   );
 };
 
 const GPU = () => {
-  const [gpu, setGpu] = useState("");
-  useEffect(() => {
-    if (platform === WINDOWS)
-      exec("wmic path win32_VideoController get name").then(({ stdout }) => {
-        setGpu(stdout.split(os.EOL)[1]);
-      });
-  }, []);
   // : platform === LINUX ?
   // execsync("lspci -mm").toString().split(os.EOL);
-  return <Info title="GPU">{gpu}</Info>;
+  return (
+    <Info
+      windows={async () => {
+        const { stdout } = await exec(
+          "wmic path win32_VideoController get name"
+        );
+        return stdout.split(os.EOL)[1];
+      }}
+      title="GPU"
+    />
+  );
 };
 
 const User = () => {
@@ -119,17 +136,21 @@ const Colors = () => {
 };
 
 const Resolution = () => {
-  const [[x, y], setRes] = useState([null, null]);
-  useEffect(() => {
-    if (platform === WINDOWS)
-      Promise.all([
-        exec("wmic path Win32_VideoController get CurrentHorizontalResolution"),
-        exec("wmic path Win32_VideoController get CurrentVerticalResolution"),
-      ]).then((values) => {
-        setRes(values.map(({ stdout }) => stdout.match(/\d+/)));
-      });
-  }, []);
-  return <Info title="Resolution">{x && y ? `${x}x${y}` : null}</Info>;
+  return (
+    <Info
+      windows={async () => {
+        const values = await Promise.all([
+          exec(
+            "wmic path Win32_VideoController get CurrentHorizontalResolution"
+          ),
+          exec("wmic path Win32_VideoController get CurrentVerticalResolution"),
+        ]);
+        const [x, y] = values.map(({ stdout }) => stdout.match(/\d+/));
+        return `${x}x${y}`;
+      }}
+      title="Resolution"
+    />
+  );
 };
 
 const megaBytes = (bytes) => Math.floor(bytes / (1024 * 1024));
