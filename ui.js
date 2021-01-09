@@ -89,7 +89,7 @@ const GPU = () => {
 };
 
 const User = () => {
-  const username = os.userInfo().username;
+  const { username } = os.userInfo();
   const hostname = os.hostname();
   return (
     <Box flexDirection="column">
