@@ -47,11 +47,15 @@ const Info = ({ title, windows, linux, children }) => {
     }[platform] || children;
   const [output, setOutput] = useState(typeof text == "string" ? text : "");
   useEffect(() => {
+    let mounted = true;
     if (text?.constructor?.name === "Function") setOutput(text());
     else if (text?.constructor?.name === "AsyncFunction")
       text().then((data) => {
-        setOutput(typeof data !== "object" ? data : "");
+        if (mounted) setOutput(typeof data !== "object" ? data : "");
       });
+    return () => {
+      mounted = false;
+    };
   }, []);
   return (
     <Text>
