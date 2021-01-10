@@ -137,23 +137,31 @@ const Colors = () => {
   );
 };
 
-const Resolution = () => {
-  return (
-    <Info
-      title="Resolution"
-      windows={async () => {
-        const values = await Promise.all([
-          exec(
-            "wmic path Win32_VideoController get CurrentHorizontalResolution"
-          ),
-          exec("wmic path Win32_VideoController get CurrentVerticalResolution"),
-        ]);
-        const [x, y] = values.map(({ stdout }) => stdout.match(/\d+/));
-        return `${x}x${y}`;
-      }}
-    />
-  );
-};
+const Resolution = () => (
+  <Info
+    title="Resolution"
+    windows={async () => {
+      const values = await Promise.all([
+        exec("wmic path Win32_VideoController get CurrentHorizontalResolution"),
+        exec("wmic path Win32_VideoController get CurrentVerticalResolution"),
+      ]);
+      const [x, y] = values.map(({ stdout }) => stdout.match(/\d+/));
+      return `${x}x${y}`;
+    }}
+  />
+);
+
+const Host = () => (
+  <Info
+    title="Host"
+    windows={async () => {
+      const { stdout } = await exec(
+        "wmic computersystem get manufacturer,model"
+      );
+      return stdout.split(os.EOL)[1];
+    }}
+  />
+);
 
 const megaBytes = (bytes) => Math.floor(bytes / (1024 * 1024));
 
@@ -165,6 +173,7 @@ const App = () => (
     <Box flexDirection="column">
       <User />
       <Info title="OS">{`${os.version()} ${os.arch()}`}</Info>
+      <Host />
       <Uptime />
       <CPUInfo />
       <GPU />
