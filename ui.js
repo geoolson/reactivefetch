@@ -10,7 +10,6 @@ const exec = util.promisify(require("child_process").exec);
 // os platform constants
 const WINDOWS = "win32";
 const LINUX = "linux";
-const ANDROID = "android";
 
 const image = `                                ..,
                     ....,,:;+ccllll
@@ -39,13 +38,12 @@ const WinImage = () => {
 
 const color = platform === WINDOWS ? "cyan" : "green";
 
-const Info = ({ title, windows, linux, android, children }) => {
+const Info = ({ title, windows, linux, children }) => {
   // pattern mathcing platform. children will be the default case
   const text =
     {
       [WINDOWS]: windows,
       [LINUX]: linux,
-      [ANDROID]: android,
     }[platform] || children;
   const [output, setOutput] = useState(typeof text == "string" ? text : "");
   useEffect(() => {
@@ -124,7 +122,6 @@ const Shell = () => {
     <Info
       title="Shell"
       linux={nixShell}
-      android={nixShell}
       windows={async () => {
         const { stdout } = await exec("Get-Host | Select-Object Version", {
           shell: "powershell",
