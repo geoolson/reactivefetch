@@ -10,6 +10,7 @@ const exec = util.promisify(require("child_process").exec);
 // os platform constants
 const WINDOWS = "win32";
 const LINUX = "linux";
+const ANDROID = "android";
 
 const image = `                                ..,
                     ....,,:;+ccllll
@@ -38,12 +39,13 @@ const WinImage = () => {
 
 const color = platform === WINDOWS ? "cyan" : "green";
 
-const Info = ({ title, windows, linux, children }) => {
+const Info = ({ title, windows, linux, android, children }) => {
   // pattern mathcing platform. children will be the default case
   const text =
     {
       [WINDOWS]: windows,
       [LINUX]: linux,
+      [ANDROID]: android,
     }[platform] || children;
   const [output, setOutput] = useState(typeof text == "string" ? text : "");
   useEffect(() => {
@@ -107,6 +109,29 @@ const Uptime = () => {
   const minutes = Math.floor(((uptime % 86400) / 60) % 60);
   return (
     <Info title="Uptime">{`${days} days, ${hours} hours, ${minutes} mins`}</Info>
+  );
+};
+
+const Shell = () => {
+  const nixShell = async () => {
+    const { stdout: shell } = await exec("sh --version");
+    if (shell.includes("bash")) {
+      let { stdout: version } = await exec("bash --version");
+      return "bash " + version.match(/\d+\.\d+\.\d+/)[0];
+    }
+  };
+  return (
+    <Info
+      title="Shell"
+      linux={nixShell}
+      android={nixShell}
+      windows={async () => {
+        const { stdout } = await exec("Get-Host | Select-Object Version", {
+          shell: "powershell",
+        });
+        return "PowerShell " + stdout.match(/\d+\.\d+\.\d+\.\d+/)[0];
+      }}
+    />
   );
 };
 
@@ -175,12 +200,16 @@ const App = () => (
       <Info title="OS">{`${os.version()} ${os.arch()}`}</Info>
       <Host />
       <Uptime />
+      <Shell />
+      <Resolution />
+      <Info title="Terminal">
+        {process.env.TERM_PROGRAM || process.env.TERM}
+      </Info>
       <CPUInfo />
       <GPU />
       <Info title="Memory">
         {`${megaBytes(os.freemem())}MiB / ${megaBytes(os.totalmem())}MiB`}
       </Info>
-      <Resolution />
       <Colors />
     </Box>
   </Box>
