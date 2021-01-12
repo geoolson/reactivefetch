@@ -33,10 +33,10 @@ llllllllllllll  lllllllllllllllllll
 `;
 
 const WinImage = () => {
-  return <Text color={color}>{image}</Text>;
+  return <Text color={color} bold>{image}</Text>;
 };
 
-const color = platform === WINDOWS ? "cyan" : "green";
+const color = platform === WINDOWS ? "cyan" : "red";
 
 const Info = ({ title, windows, linux, children }) => {
   // pattern mathcing platform. children will be the default case
@@ -57,7 +57,7 @@ const Info = ({ title, windows, linux, children }) => {
   }, []);
   return (
     <Text>
-      <Text color={color}>{title}</Text>: {output}
+      <Text color={color} bold>{title}</Text>: {output}
     </Text>
   );
 };
@@ -82,6 +82,16 @@ const GPU = () => {
         );
         return stdout.split(os.EOL)[1];
       }}
+      linux={async () => {
+        const { stdout } = await exec("lspci -mm");
+        return stdout
+          .split(os.EOL)
+          .filter(cur => cur.match(/vga|geforce/i))[0]
+          .match(/"[A-Za-z\s\d\[\]]+"/g)
+          .slice(1,3)
+          .join(" ")
+          .replace(/"/g, "")
+      }}
     />
   );
 };
@@ -92,8 +102,8 @@ const User = () => {
   return (
     <Box flexDirection="column">
       <Text>
-        <Text color={color}>{username}</Text>@
-        <Text color={color}>{hostname}</Text>
+        <Text color={color} bold>{username}</Text>@
+        <Text color={color} bold>{hostname}</Text>
       </Text>
       <Text>{Array(1 + username.length + hostname.length).fill("-")}</Text>
     </Box>
@@ -121,7 +131,6 @@ const Shell = () => {
   return (
     <Info
       title="Shell"
-      linux={nixShell}
       windows={async () => {
         const { stdout } = await exec("Get-Host | Select-Object Version", {
           shell: "powershell",
@@ -177,9 +186,7 @@ const Host = () => (
   <Info
     title="Host"
     windows={async () => {
-      const { stdout } = await exec(
-        "wmic computersystem get manufacturer,model"
-      );
+      const { stdout } = await exec("wmic computersystem get manufacturer,model");
       return stdout.split(os.EOL)[1];
     }}
   />
